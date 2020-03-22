@@ -43,28 +43,44 @@ do_setup_admin_password() {
 
 do_setup_concentrator_shield() {
     FUN=$(dialog --title "Setup LoRa concentrator shield" --menu "Select shield:" 15 60 9 \
-        1 "IMST       - iC880A" \
-        2 "IMST       - iC980A" \
-        3 "IMST       - Lite Gateway" \
-        4 "Pi Supply  - LoRa Gateway HAT" \
-        5 "RAK        - RAK2245" \
-        6 "RAK        - RAK831" \
-        7 "RisingHF   - RHF0M301" \
-        8 "Sandbox    - LoRaGo PORT" \
-        9 "Semtech    - SX1302 CoreCell" \
+        1  "Dragino    - PG1301" \
+	    2  "IMST       - iC880A" \
+        3  "IMST       - iC980A" \
+        4  "IMST       - Lite Gateway" \
+        5  "Pi Supply  - LoRa Gateway HAT" \
+        6  "RAK        - RAK2245" \
+        7  "RAK        - RAK831" \
+        8  "RisingHF   - RHF0M301" \
+        9  "Sandbox    - LoRaGo PORT" \
+        10 "Semtech    - SX1302 CoreCell" \
         3>&1 1>&2 2>&3)
     RET=$?
     if [ $RET -eq 0 ]; then
         case "$FUN" in
-            1) do_set_concentratord "sx1301" && do_prompt_concentrator_reset_pin && do_setup_ic880a;;
-            2) do_set_concentratord "sx1301" && do_prompt_concentrator_reset_pin && do_setup_ic980a;;
-            3) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 5  && do_setup_imst_lite;;
-            4) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 22 && do_setup_pislora;;
-            5) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 17 && do_setup_rak831;;
+            1) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 23 && do_setup_pg1301;;
+	        2) do_set_concentratord "sx1301" && do_prompt_concentrator_reset_pin && do_setup_ic880a;;
+            3) do_set_concentratord "sx1301" && do_prompt_concentrator_reset_pin && do_setup_ic980a;;
+            4) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 5  && do_setup_imst_lite;;
+            5) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 22 && do_setup_pislora;;
             6) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 17 && do_setup_rak831;;
-            7) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 7  && do_setup_rhf0m301;;
-            8) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 25 && do_setup_lorago_port;;
-            9) do_set_concentratord "sx1302" && do_set_concentrator_reset_pin 23 && do_set_concentratord_power_en_pin 18 && do_setup_semtech_corecell;;
+            7) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 17 && do_setup_rak831;;
+            8) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 7  && do_setup_rhf0m301;;
+            9) do_set_concentratord "sx1301" && do_set_concentrator_reset_pin 25 && do_setup_lorago_port;;
+            10) do_set_concentratord "sx1302" && do_set_concentrator_reset_pin 23 && do_set_concentratord_power_en_pin 18 && do_setup_semtech_corecell;;
+        esac
+    fi
+}
+
+do_setup_pg1301() {
+    FUN=$(dialog --title "Channel-plan configuration" --menu "Select the channel-plan:" 15 60 1 \
+        1 "EU868" \
+        3>&1 1>&2 2>&3)
+    RET=$?
+    if [ $RET -eq 1 ]; then
+        do_main_menu
+    elif [ $RET -eq 0 ]; then
+        case "$FUN" in
+			1) do_copy_concentratord_config "sx1301" "generic_eu868" "" "eu868" "0" && do_copy_chirpstack_ns_config "eu868";;
         esac
     fi
 }
@@ -326,9 +342,9 @@ do_copy_chirpstack_ns_config() {
     if [ ! -d /etc/chirpstack-network-server ]; then
         return;
     fi
+    if [ -f /etc/chirpstack-network-server/chirpstack-network-server.toml ]; then
 
     RET=0
-    if [ -f /etc/chirpstack-network-server/chirpstack-network-server.toml ]; then
         dialog --yesno "A ChirpStack Network Server configuration file already exists. Do you want to overwrite it?" 6 60
         RET=$?
     fi
